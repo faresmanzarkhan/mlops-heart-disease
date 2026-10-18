@@ -1,0 +1,17 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+mlruns/
+mlflow-artifacts/
+data/
+screenshots/
+artifacts/
+.cache/
+.ipynb_checkpoints/
+.kube/
+.minikube/
+.mozilla/
+.config/
+.local/
+miniconda3/
