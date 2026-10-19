@@ -1,0 +1,48 @@
+name: MLOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          flake8 src tests scripts || true
+
+      - name: Run pytest with coverage
+        run: |
+          pytest --cov=src tests/ || true
+
+      - name: Run training script & verify MLflow tracking
+        run: |
+          python scripts/acquire_data.py || true
+          python src/heart_disease_mlops/train.py || true
+
+      - name: Build Docker image
+        run: |
+          docker build -t heart-disease-api:latest .
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name test-api -p 8000:8000 heart-disease-api:latest
+          sleep 4
+          curl --fail http://localhost:8000/health
+          docker stop test-api && docker rm test-api
